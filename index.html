@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词典</title>
+    <!-- 引入 Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <!-- 引入 CryptoJS CDN (用于SHA256签名) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --primary-bg: #e0e5ec;
+            --accent-color: #4facfe;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 50px;
+            color: var(--text-main);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 20px;
+            padding-right: 60px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.5);
+            font-size: 1.1rem;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
+        }
+
+        .btn-translate {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .btn-translate:hover {
+            transform: scale(1.05);
+            background: #00c6ff;
+        }
+
+        .btn-translate svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        #result {
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .word-header {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .word-title {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .phonetic-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .phonetic-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+
+
+        .section-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin: 25px 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .definition-item {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .pos {
+            color: var(--accent-color);
+            font-weight: 700;
+            margin-right: 12px;
+            font-size: 0.9rem;
+            background: rgba(79, 172, 254, 0.1);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .phonetic-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #444;
+            font-size: 0.95rem;
+            background: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        .btn-audio {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3b82f6;
+            /* 经典的蓝色 */
+            transition: color 0.2s, transform 0.1s;
+        }
+
+        .btn-audio:hover {
+            color: #00c6ff;
+            transform: scale(1.1);
+        }
+
+        .btn-audio svg {
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1> </h1>
+        <div class="search-box">
+            <textarea id="inputText" placeholder="输入单词或句子..." rows="3"></textarea>
+            <button class="btn-translate" onclick="handleTranslate()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+        <div id="result"></div>
+        <div id="volcResult" style="margin-top: 20px; animation: fadeIn 0.5s ease-out;"></div>
+    </div>
+
+    <script>
+        // 有道翻译配置信息
+        const config = {
+            appid: '1aee428b36660387', // 有道应用ID
+            key: 'JieTz7973QqTTFj5TOdrtvWNtdfzvr1l' // 有道密钥
+        };
+
+        // 生成有道翻译签名
+        function generateYoudaoSign(q, salt, curtime) {
+            const str = config.appid + truncate(q) + salt + curtime + config.key;
+            return CryptoJS.SHA256(str).toString();
+        }
+
+        // 截断函数(有道要求)
+        function truncate(q) {
+            const len = q.length;
+            if (len <= 20) return q;
+            return q.substring(0, 10) + len + q.substring(len - 10, len);
+        }
+
+        async function handleTranslate() {
+            const q = document.getElementById('inputText').value.trim();
+            const resultDiv = document.getElementById('result');
+            const volcResultDiv = document.getElementById('volcResult');
+
+            if (!q) return;
+
+            // Clear results
+            resultDiv.innerHTML = '<div class="loading">正在查询有道翻译...</div>';
+            volcResultDiv.innerHTML = '';
+
+            if (!config.appid) {
+                resultDiv.innerHTML = '<div style="color:#d63031; padding:20px; background:rgba(255,0,0,0.1); border-radius:12px;">提示:请在代码中的 config.appid 处填写您的有道应用ID才能进行翻译。</div>';
+                return;
+            }
+
+            // 1. Call Youdao Translation
+            try {
+                const salt = new Date().getTime();
+                const curtime = Math.round(new Date().getTime() / 1000);
+                const sign = generateYoudaoSign(q, salt, curtime);
+
+                const isChinese = /[\u4e00-\u9fa5]/.test(q);
+                // Youdao language codes
+                const from = isChinese ? 'zh-CHS' : 'en';
+                const to = isChinese ? 'en' : 'zh-CHS';
+
+                const youdaoUrl = `https://openapi.youdao.com/api?q=${encodeURIComponent(q)}&from=${from}&to=${to}&appKey=${config.appid}&salt=${salt}&sign=${sign}&signType=v3&curtime=${curtime}&callback=youdaoCallback`;
+
+                // Handle JSONP callback logic...
+                // ... (Keep existing JSONP logic for Youdao)
+
+                // Clear old script
+                const oldScript = document.getElementById('youdao-jsonp');
+                if (oldScript) oldScript.remove();
+
+                window.youdaoCallback = function (data) {
+                    if (data.errorCode && data.errorCode !== '0') {
+                        resultDiv.innerHTML = `<div style="color:#d63031;">错误代码: ${data.errorCode} - 请检查API配置</div>`;
+                    } else {
+                        renderResult(data, q, from, to);
+                    }
+                    delete window.youdaoCallback;
+                    const script = document.getElementById('youdao-jsonp');
+                    if (script) script.remove();
+                };
+
+                const script = document.createElement('script');
+                script.id = 'youdao-jsonp';
+                script.src = youdaoUrl;
+                script.onerror = function () {
+                    resultDiv.innerHTML = `<div style="color:#d63031;">网络请求失败,请检查您的网络连接。</div>`;
+                };
+                document.body.appendChild(script);
+
+                // 2. Call VolcEngine Translation (Parallel)
+                // Volc language codes: zh, en
+                const vFrom = isChinese ? 'zh' : 'en';
+                const vTo = isChinese ? 'en' : 'zh';
+                handleVolcTranslate(q, vFrom, vTo);
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color:#d63031;">查询过程发生错误。</div>`;
+                console.error(error);
+            }
+        }
+
+        async function handleVolcTranslate(text, fromLang, toLang) {
+            const volcResultDiv = document.getElementById('volcResult');
+            volcResultDiv.innerHTML = '<div class="loading" style="font-size: 0.9rem;">正在加载火山翻译参考...</div>';
+
+            const url = "https://translate.volcengine.com/api/translate/web/v1/translate";
+            const data = {
+                "text": text,
+                "from_language": fromLang,
+                "to_language": toLang,
+                "scene": "general"
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const translatedText = result.data && result.data.translate_text ? result.data.translate_text : "翻译失败";
+
+                volcResultDiv.innerHTML = `
+                    <div class="definition-item" style="border-left: 4px solid #ff7675;">
+                        <span class="pos" style="background: rgba(255, 118, 117, 0.1); color: #ff7675;">火山翻译</span>
+                        <span style="font-weight: 500;">${translatedText}</span>
+                    </div>
+                `;
+            } catch (error) {
+                console.error("VolcEngine Translate Error:", error);
+                volcResultDiv.innerHTML = `<div style="color: var(--text-muted); font-size: 0.85rem; padding: 10px;">火山翻译暂不可用 (可能受网络环境限制)</div>`;
+            }
+        }
+
+        function renderResult(data, query, from, to) {
+            const resultDiv = document.getElementById('result');
+            let html = '';
+
+            const isChineseQuery = from === 'zh-CHS';
+            const targetLang = isChineseQuery ? 'en' : 'zh';
+            const sourceLang = isChineseQuery ? 'zh' : 'en';
+
+            // 主翻译结果
+            const mainTranslation = data.translation ? data.translation.join('; ') : '';
+
+            html += `<div class="word-header">
+                        <div style="width:100%">
+                            <div class="word-title" style="font-size: 2.2rem; color: var(--accent-color); margin-bottom: 5px;">
+                                ${mainTranslation}
+                                <button class="btn-audio" style="display:inline-flex; vertical-align:middle; margin-left:10px;" onclick="playCustomYoudaoTTS('${mainTranslation.replace(/'/g, "\\'")}', '${to}')">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="source-text" style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 15px;">
+                                原文: ${query}
+                                <button class="btn-audio" style="display:inline-flex; vertical-align:middle; margin-left:5px; transform: scale(0.8);" onclick="playCustomYoudaoTTS('${query.replace(/'/g, "\\'")}', '${from}')">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>`;
+
+            // 音标区 (如果有基本释义)
+            if (data.basic) {
+                html += `<div class="phonetic-group">`;
+                if (data.basic['us-phonetic']) html += renderPhonetic('美', data.basic['us-phonetic'], query, from);
+                if (data.basic['uk-phonetic']) html += renderPhonetic('英', data.basic['uk-phonetic'], query, from);
+                if (data.basic.phonetic) html += renderPhonetic('音', data.basic.phonetic, query, from);
+                html += `</div>`;
+            }
+            html += `</div>`;
+
+            // 释义部分
+            html += `<div class="section-title">详细释义</div>`;
+            if (data.basic && data.basic.explains && data.basic.explains.length > 0) {
+                data.basic.explains.forEach(explain => {
+                    html += `<div class="definition-item">
+                                <span class="pos">释</span>
+                                <span>${explain}</span>
+                            </div>`;
+                });
+            } else {
+                html += `<div class="definition-item">
+                            <span class="pos">译</span>
+                            <span>${mainTranslation}</span>
+                         </div>`;
+            }
+
+            // 网络释义
+            if (data.web && data.web.length > 0) {
+                html += `<div class="section-title">网络释义</div>`;
+                data.web.slice(0, 5).forEach(item => {
+                    html += `<div class="definition-item">
+                                <span class="pos">${item.key}</span>
+                                <span>${item.value.join('; ')}</span>
+                            </div>`;
+                });
+            }
+
+            // 专业解释链接
+            if (data.webdict && data.webdict.url) {
+                html += `<div style="margin-top: 20px; text-align: right;">
+                            <a href="${data.webdict.url}" target="_blank" style="color: var(--accent-color); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                                查看更多专业释义 
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    <polyline points="15 3 21 3 21 9"></polyline>
+                                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                                </svg>
+                            </a>
+                         </div>`;
+            }
+
+            resultDiv.innerHTML = html;
+        }
+
+        function renderPhonetic(label, ph, text, lang) {
+            const phLabel = ph ? `[${ph}]` : '';
+            return `
+                <div class="phonetic-item">
+                    <span>${label} ${phLabel}</span>
+                    <button class="btn-audio" onclick="playCustomYoudaoTTS('${text.replace(/'/g, "\\'")}', '${lang}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+        }
+
+        // 自定义有道TTS播放 (支持自定义发音人和语速)
+        function playCustomYoudaoTTS(text, lang) {
+            try {
+                // 构建TTS请求
+                const salt = new Date().getTime();
+                const curtime = Math.round(new Date().getTime() / 1000);
+
+                // 签名生成 input=q前10 + len + q后10
+                const sign = generateYoudaoSign(text, salt, curtime);
+
+                // 构建URL参数
+                const params = new URLSearchParams({
+                    q: text,
+                    appKey: config.appid,
+                    salt: salt,
+                    sign: sign,
+                    signType: 'v3',
+                    curtime: curtime,
+                    format: 'mp3',
+                    speed: '0.7',       // 语速 0.7
+                    voiceName: 'youxiaoqin', // 发音人 小沁
+                    volume: '2.00'      // 音量稍微调大一点
+                });
+
+                const audioUrl = `https://openapi.youdao.com/ttsapi?${params.toString()}`;
+
+                const audio = new Audio(audioUrl);
+                audio.play().catch(err => {
+                    console.error('有道语音播放失败，使用浏览器原生语音', err);
+                    fallbackToNativeSpeech(text, lang);
+                });
+            } catch (e) {
+                console.error('语音播放失败', e);
+                fallbackToNativeSpeech(text, lang);
+            }
+        }
+
+        function fallbackToNativeSpeech(text, lang) {
+            const msg = new SpeechSynthesisUtterance();
+            msg.text = text;
+            msg.lang = (lang === 'zh-CHS' || lang === 'zh') ? 'zh-CN' : 'en-US';
+            msg.rate = 0.7; // 匹配用户要求的 0.7 语速
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(msg);
+        }
+    </script>
+</body>
+
+</html>

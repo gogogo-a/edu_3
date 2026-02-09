@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "type": "web",
+  "name": "ClassIn中英语音翻译",
+  "url": "https://gogogo-a.github.io/classin/index.html",
+  "width": 900,
+  "height": 500,
+  "resizable": true,
+  "fullscreen": true,
+  "auto_open": false,
+  "titleBar": true,
+  "userInfo": true,
+  "permission": {
+    "teacher": ["manage", "term", "setting"],
+    "student": ["view", "follow"]
+  },
+  "entry": {
+    "termLib": "/term",
+    "speedSet": "/speed"
+  }
+}
