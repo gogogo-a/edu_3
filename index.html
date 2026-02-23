@@ -79,12 +79,6 @@
             font-family: inherit;
         }
 
-        textarea:disabled {
-            background: rgba(0, 0, 0, 0.05);
-            cursor: not-allowed;
-            color: var(--text-muted);
-        }
-
         textarea:focus {
             background: rgba(255, 255, 255, 0.8);
             border-color: var(--accent-color);
@@ -108,28 +102,9 @@
             transition: transform 0.2s ease, background 0.2s ease;
         }
 
-        .btn-translate:disabled {
-            background: #b2bec3;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-translate:hover:not(:disabled) {
+        .btn-translate:hover {
             transform: scale(1.05);
             background: #00c6ff;
-        }
-
-        .status-msg {
-            margin-top: -15px;
-            margin-bottom: 25px;
-            text-align: center;
-            color: #d63031;
-            font-size: 0.95rem;
-            font-weight: 600;
-            padding: 10px;
-            background: rgba(214, 48, 49, 0.1);
-            border-radius: 12px;
-            animation: fadeIn 0.5s ease-out;
         }
 
         .btn-translate svg {
@@ -272,14 +247,13 @@
     <div class="container">
         <h1> </h1>
         <div class="search-box">
-            <textarea id="inputText" placeholder="输入单词或句子..." rows="3" disabled></textarea>
-            <button class="btn-translate" onclick="handleTranslate()" disabled>
+            <textarea id="inputText" placeholder="输入单词或句子..." rows="3"></textarea>
+            <button class="btn-translate" onclick="handleTranslate()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
             </button>
         </div>
-        <div class="status-msg">请确认收货后才能使用</div>
         <div id="result"></div>
         <div id="volcResult" style="margin-top: 20px; animation: fadeIn 0.5s ease-out;"></div>
     </div>
