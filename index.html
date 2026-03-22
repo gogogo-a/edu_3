@@ -43,7 +43,7 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
-            padding: 40px;
+            padding: 0 40px 40px;
             box-shadow: var(--shadow);
             margin-bottom: 50px;
         }
@@ -245,7 +245,6 @@
 
 <body>
     <div class="container">
-        <h1> </h1>
         <div class="search-box">
             <textarea id="inputText" placeholder="输入单词或句子..." rows="3"></textarea>
             <button class="btn-translate" onclick="handleTranslate()">
@@ -503,7 +502,7 @@
                     signType: 'v3',
                     curtime: curtime,
                     format: 'mp3',
-                    speed: '0.7',       // 语速 0.7
+                    speed: '0.9',       // 语速 0.9
                     voiceName: 'youxiaoqin', // 发音人 小沁
                     volume: '2.00'      // 音量稍微调大一点
                 });
@@ -525,7 +524,7 @@
             const msg = new SpeechSynthesisUtterance();
             msg.text = text;
             msg.lang = (lang === 'zh-CHS' || lang === 'zh') ? 'zh-CN' : 'en-US';
-            msg.rate = 0.7; // 匹配用户要求的 0.7 语速
+            msg.rate = 0.9; // 匹配用户要求的 0.9 语速
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(msg);
         }
